@@ -23,10 +23,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -65,7 +67,22 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun GeoQuizScreen() {
     var currentIndex by remember { mutableIntStateOf(0) }
+    var answeredQuestions by remember { mutableStateOf(setOf<Int>()) }
+    var correctAnswersCount by remember { mutableIntStateOf(0) }
+
     val currentQuestion = questionBank[currentIndex]
+    val isCurrentQuestionAnswered = currentIndex in answeredQuestions
+
+    fun handleAnswer(userAnswer: Boolean) {
+        if (isCurrentQuestionAnswered) return
+
+        val isCorrect = userAnswer == currentQuestion.answer
+        if (isCorrect) {
+            correctAnswersCount++
+        }
+
+        answeredQuestions = answeredQuestions + currentIndex
+    }
 
     Scaffold(
         topBar = {
@@ -106,18 +123,22 @@ fun GeoQuizScreen() {
             Spacer(modifier = Modifier.height(48.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(if (isCurrentQuestionAnswered) 0f else 1f),
                 horizontalArrangement = Arrangement.Absolute.SpaceBetween
             ) {
                 Button(
-                    onClick = { },
+                    onClick = { handleAnswer(true) },
+                    enabled = !isCurrentQuestionAnswered,
                     modifier = Modifier.width(120.dp)
                 ) {
                     Text(text = "TRUE", fontSize = 16.sp)
                 }
 
                 Button(
-                    onClick = {  },
+                    onClick = { handleAnswer(false) },
+                    enabled = !isCurrentQuestionAnswered,
                     modifier = Modifier.width(120.dp)
                 ) {
                     Text(text = "FALSE", fontSize = 16.sp)
