@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -69,9 +70,12 @@ fun GeoQuizScreen() {
     var currentIndex by remember { mutableIntStateOf(0) }
     var answeredQuestions by remember { mutableStateOf(setOf<Int>()) }
     var correctAnswersCount by remember { mutableIntStateOf(0) }
+    var showResultDialog by remember { mutableStateOf(false) }
 
     val currentQuestion = questionBank[currentIndex]
     val isCurrentQuestionAnswered = currentIndex in answeredQuestions
+    val isLastQuestion = currentIndex == questionBank.size - 1
+    val isNextButtonVisible = !(isLastQuestion && isCurrentQuestionAnswered)
 
     fun handleAnswer(userAnswer: Boolean) {
         if (isCurrentQuestionAnswered) return
@@ -82,6 +86,17 @@ fun GeoQuizScreen() {
         }
 
         answeredQuestions = answeredQuestions + currentIndex
+
+        if (isLastQuestion) {
+            showResultDialog = true
+        }
+    }
+
+    fun restartQuiz() {
+        currentIndex = 0
+        answeredQuestions = emptySet()
+        correctAnswersCount = 0
+        showResultDialog = false
     }
 
     Scaffold(
@@ -157,11 +172,42 @@ fun GeoQuizScreen() {
                             currentIndex++
                         }
                     },
-                    modifier = Modifier.padding(end = 16.dp)
+                    enabled = isNextButtonVisible,
+                    modifier = Modifier
+                        .padding(end = 16.dp)
+                        .alpha(if (isNextButtonVisible) 1f else 0f)
                 ) {
                     Text(text = "NEXT >", fontSize = 16.sp)
                 }
             }
+        }
+
+        if (showResultDialog) {
+            AlertDialog(
+                onDismissRequest = { showResultDialog = false },
+                title = {
+                    Text(
+                        text = "Результат теста",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                        text = "Вы ответили правильно на $correctAnswersCount из ${questionBank.size} вопросов!",
+                        fontSize = 16.sp
+                    )
+                },
+                confirmButton = {
+                    Button(onClick = { restartQuiz() }) {
+                        Text("Пройти заново")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = { showResultDialog = false }) {
+                        Text("ОК")
+                    }
+                }
+            )
         }
     }
 }
